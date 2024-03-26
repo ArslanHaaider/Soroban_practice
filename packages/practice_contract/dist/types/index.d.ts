@@ -1,4 +1,5 @@
 import { ContractSpec } from '@stellar/stellar-sdk';
+import { Buffer } from "buffer";
 import { AssembledTransaction } from './assembled-tx.js';
 import type { ClassOptions } from './method-options.js';
 export * from './assembled-tx.js';
@@ -6,7 +7,7 @@ export * from './method-options.js';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CCAITQR53DTFJT3B3CTS3A7YPK5Z2YUFW2RMZCNODGMWCEMUASKIQL7P";
+        readonly contractId: "CAU5WBPCOWZO2EMNPRZIVTPX5D6YSGO7I3QTBHFDP2L374OSX6VEK2VO";
     };
 };
 /**
@@ -23,6 +24,7 @@ export declare class Contract {
         hellooo: (json: string) => AssembledTransaction<string[]>;
         decrement: (json: string) => AssembledTransaction<number>;
         increment: (json: string) => AssembledTransaction<number>;
+        verifySignature: (json: string) => AssembledTransaction<void>;
     };
     /**
 * Construct and simulate a hellooo transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -53,4 +55,17 @@ export declare class Contract {
          */
         fee?: number;
     }) => Promise<AssembledTransaction<number>>;
+    /**
+* Construct and simulate a verify_signature transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+*/
+    verifySignature: ({ message, address, signature }: {
+        message: Buffer;
+        address: Buffer;
+        signature: Buffer;
+    }, options?: {
+        /**
+         * The fee to pay for the transaction. Default: 100.
+         */
+        fee?: number;
+    }) => Promise<AssembledTransaction<void>>;
 }

@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, log, symbol_short, Env, Symbol,Vec,vec};
+use soroban_sdk::{bytes, contract, contractimpl, log, symbol_short, vec, xdr::{MessageType, Signature}, Address, Bytes, BytesN, Env, Symbol, Vec};
 
 #[contract]
 pub struct Practice;
@@ -26,6 +26,12 @@ impl Practice {
         env.storage().persistent().set(&Counter,&count);
         env.storage().persistent().extend_ttl(&Counter,100,100);
         count 
+    }
+    pub fn verify_signature(env:Env,message:Bytes,address:BytesN<32>,signature:BytesN<64>) -> bool{
+    //will panic if verification fails
+     env.crypto().ed25519_verify(&address,&message,&signature);
+    // else it will reuturn true;
+     true
     }
 }
 

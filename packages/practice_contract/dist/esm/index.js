@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CCAITQR53DTFJT3B3CTS3A7YPK5Z2YUFW2RMZCNODGMWCEMUASKIQL7P",
+        contractId: "CAU5WBPCOWZO2EMNPRZIVTPX5D6YSGO7I3QTBHFDP2L374OSX6VEK2VO",
     }
 };
 /**
@@ -25,13 +25,15 @@ export class Contract {
         this.spec = new ContractSpec([
             "AAAAAAAAAAAAAAAHaGVsbG9vbwAAAAABAAAAAAAAAAJ0bwAAAAAAEQAAAAEAAAPqAAAAEQ==",
             "AAAAAAAAAAAAAAAJZGVjcmVtZW50AAAAAAAAAAAAAAEAAAAE",
-            "AAAAAAAAAAAAAAAJaW5jcmVtZW50AAAAAAAAAAAAAAEAAAAE"
+            "AAAAAAAAAAAAAAAJaW5jcmVtZW50AAAAAAAAAAAAAAEAAAAE",
+            "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAAA"
         ]);
     }
     parsers = {
         hellooo: (result) => this.spec.funcResToNative("hellooo", result),
         decrement: (result) => this.spec.funcResToNative("decrement", result),
-        increment: (result) => this.spec.funcResToNative("increment", result)
+        increment: (result) => this.spec.funcResToNative("increment", result),
+        verifySignature: () => { }
     };
     txFromJSON = (json) => {
         const { method, ...tx } = JSON.parse(json);
@@ -44,7 +46,8 @@ export class Contract {
     fromJSON = {
         hellooo: (this.txFromJSON),
         decrement: (this.txFromJSON),
-        increment: (this.txFromJSON)
+        increment: (this.txFromJSON),
+        verifySignature: (this.txFromJSON)
     };
     /**
 * Construct and simulate a hellooo transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -83,6 +86,19 @@ export class Contract {
             ...this.options,
             errorTypes: Errors,
             parseResultXdr: this.parsers['increment'],
+        });
+    };
+    /**
+* Construct and simulate a verify_signature transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+*/
+    verifySignature = async ({ message, address, signature }, options = {}) => {
+        return await AssembledTransaction.fromSimulation({
+            method: 'verify_signature',
+            args: this.spec.funcArgsToScVals("verify_signature", { message, address, signature }),
+            ...options,
+            ...this.options,
+            errorTypes: Errors,
+            parseResultXdr: this.parsers['verifySignature'],
         });
     };
 }
