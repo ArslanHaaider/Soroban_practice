@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{bytes, contract, contractimpl, log, symbol_short, vec, xdr::{MessageType, Signature}, Address, Bytes, BytesN, Env, Symbol, Vec};
+use soroban_sdk::{bytes, contract, contractimpl, log, symbol_short, vec, Bytes, BytesN, Env, Symbol, Vec,Address,token};
 
 #[contract]
 pub struct Practice;
@@ -30,9 +30,15 @@ impl Practice {
     pub fn verify_signature(env:Env,message:Bytes,address:BytesN<32>,signature:BytesN<64>) -> bool{
     //will panic if verification fails
      env.crypto().ed25519_verify(&address,&message,&signature);
-    // else it will reuturn true;
+    // else it will reuturn true; 
      true
     }
-}
+    pub fn approval(env: Env,token_address:Address,from:Address,spender:Address,amount:i128){
+        from.require_auth();
+        let ledger = env.ledger().sequence();
+        let expiration_ledger:u32 = ledger + 1000;
+        let client = token::Client::new(&env, &token_address);
+        client.approve(&from, &spender, &amount, &expiration_ledger)
+    }}
 
 mod test;

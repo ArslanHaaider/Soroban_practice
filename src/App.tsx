@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import helloWorld from "./contracts/practice_contract";
+import helloWorld from "./contracts/legacy";
 import FreighterComponent from './components/ConnectFreighter'
 import {
   isConnected,
@@ -17,7 +17,14 @@ import {
   Networks,
   BASE_FEE,
   xdr,
-  StrKey
+  StrKey,
+  XdrLargeInt,
+  nativeToScVal,
+  Address,
+  Memo, 
+  Transaction,
+  ScInt,
+  sign
 } from "@stellar/stellar-sdk";
 
 function App() {
@@ -42,81 +49,140 @@ function App() {
   };
   retrievePublicKey();
   },[])
-
-
-  const Decrement = async()=>{
-    // const tx = await helloWorld.decrement();
-    // const {result} = await tx.signAndSend();
-    // setValue(result);
-    // Configure SorobanClient to use the `soroban-rpc` instance of your
-  // choosing.
-
-
-  //first implementation  to call the contract in this example I just have implemented sended signature verifciation logic to send the transaction through hasn't been added
-  const server = new SorobanRpc.Server(
-    "https://soroban-testnet.stellar.org:443",
-  );
-
-  // Here we will use a deployed instance of the `increment` example contract.
-  const contractAddress =
-  "CBRSICTR36JXDYHAOQS3WFCNOUYKKPRGQFLRJDSJS56MYC5AFUUT5SSS";
-  const contract = new Contract(contractAddress);
-
-  // Transactions require a valid sequence number (which varies from one
-  // account to another). We fetch this sequence number from the RPC server.
+  const contractAddress = "CBPUXMRKUQP2D5OUBWBSI7KP7UY2JLPXE4F5QISCZZL3ZALGF3PYQLNX"
+    const adminKey = Keypair.fromSecret("SA5QZIOK2MHIHURJECTWLPTT7IGWXVNA7M56KIBQOU5RO2WSB774FJAR");
+    const adminPublicKey = new Address(adminKey.publicKey())
+  const signs = adminKey.signDecorated(adminKey.publicKey());
+  const message = new Address(adminKey.publicKey());
+  const approval = async()=>{
+    const server = new SorobanRpc.Server(
+      "https://soroban-testnet.stellar.org:443",
+    );
   const sourceAccount = await server.getAccount(publicKey);
-  console.log("Gonna pritn the source Account",sourceAccount)
-  // The transaction begins as pretty standard. The source account, minimum
-  // fee, and network passphrase are provided.
-  let builtTransaction = new TransactionBuilder(sourceAccount, {
-    fee: BASE_FEE,
-    networkPassphrase: Networks.TESTNET,
-  })
-    // The invocation of the `increment` function of our contract is added
-    // to the transaction. Note: `increment` doesn't require any parameters,
-    // but many contract functions do. You would need to provide those here.
-    .addOperation(contract.call("decrement"))
-    // This transaction will be valid for the next 30 seconds
-    .setTimeout(30)
-    .build();
+  const xlmSac= new Address("CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC")
+  const Account2 = new Address("GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B")
+  const userAddress = new Address(publicKey);
+  const owner = new Address("GCWOV73MMIZO7JYOYLRZZZ2QLGFYFL2B45RP5PUMR45TBO23URGIXYWS")
+  let amount = new XdrLargeInt('i128',200000000);
+  let amountScVal = amount.toI128()
+  console.log(publicKey);
+  const contractsAddress = new Address(contractAddress)
+  const contract = new Contract(contractAddress.toString());
 
-  console.log(`builtTransaction=${builtTransaction.toXDR()}`);
+    let builtTransaction =  new TransactionBuilder(sourceAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    }).addOperation(contract.call("claim_asset",nativeToScVal(owner),nativeToScVal(userAddress))).setTimeout(30).build()
+    console.log(`builtTransaction=${builtTransaction.toXDR()}`);
 
-  // We use the RPC server to "prepare" the transaction. This simulating the
-  // transaction, discovering the storage footprint, and updating the
-  // transaction to include that footprint. If you know the footprint ahead of
-  // time, you could manually use `addFootprint` and skip this step.
   let preparedTransaction = await server.prepareTransaction(builtTransaction);
-  let messageHash = preparedTransaction.hash();
+  // let messageHash = preparedTransaction.hash();
   let xdrString = preparedTransaction.toEnvelope().toXDR("base64")
   const transaction = await signTransaction(xdrString,{ networkPassphrase: Networks.TESTNET })
+  console.log("Signed transaction Xdr",transaction)
+  const txEnvelope = xdr.TransactionEnvelope.fromXDR(transaction,'base64')
+  const tx =new Transaction(txEnvelope,Networks.TESTNET)
+  console.log("txXdr",tx.toEnvelope().toXDR("base64"));
+  try {
+    let sendResponse = await server.sendTransaction(tx);
+    console.log(`Sent transaction: ${JSON.stringify(sendResponse)}`);
 
-  // const testPublicKey = "GCWOV73MMIZO7JYOYLRZZZ2QLGFYFL2B45RP5PUMR45TBO23URGIXYWS"
-  const publicKeyBuffer = StrKey.decodeEd25519PublicKey(publicKey)
-  const txEnvelope = xdr.TransactionEnvelope.fromXDR(transaction, 'base64');
-      const signature = txEnvelope.v1().signatures()[0].signature();
-      const message = await txEnvelope.v1().tx().toXDR();
-      // console.log('signature: ', signatures[0].signature());
-      console.log('message: ', message);
-      //can add try catch block to catch the error if verifcation fails else will Submit the transaction to the Soroban-RPC server
-      const result = await helloWorld.verifySignature({message:messageHash,address:publicKeyBuffer,signature:signature});
+    if (sendResponse.status === "PENDING") {
+      let getResponse = await server.getTransaction(sendResponse.hash);
+      // Poll `getTransaction` until the status is not "NOT_FOUND"
+      while (getResponse.status === "NOT_FOUND") {
+        console.log("Waiting for transaction confirmation...");
+        // See if the transaction is complete
+        getResponse = await server.getTransaction(sendResponse.hash);
+        // Wait one second
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      console.log(`getTransaction response: ${JSON.stringify(getResponse)}`);
+
+      if (getResponse.status === "SUCCESS") {
+        // Make sure the transaction's resultMetaXDR is not empty
+        if (!getResponse.resultMetaXdr) {
+          throw "Empty resultMetaXDR in getTransaction response";
+        }
+        // Find the return value from the contract and return it
+        let transactionMeta = getResponse.resultMetaXdr;
+        let returnValue =  transactionMeta.v3().sorobanMeta()?.returnValue();
+        console.log(`Transaction result: ${returnValue?.value()}`);
+      } else {
+        throw `Transaction failed: ${getResponse.resultXdr}`;
+      }
+    } else {
+      throw sendResponse.errorResult;
+    }
+  } catch (err) {
+    // Catch and report any errors we've thrown
+    console.log("Sending transaction failed");
+    console.log(JSON.stringify(err));
   }
+  }
+
   const Increment = async()=>{
+  let amounts = new XdrLargeInt('i128',20);
     //second way to call contract just using the client we imported
-    const tx = await helloWorld.increment();
-    const {result} = (await tx.signAndSend());
-    setValue(result);
+    const tx = await helloWorld.approval({token_address:"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",from:publicKey,spender:"GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B",amount:amounts.toBigInt()});
+    // const tx = await helloWorld.increment();
+    const {getTransactionResponseAll} = await tx.signAndSend();
+    console.log(getTransactionResponseAll)
+  }
+  const addAdmin = async()=>{
+    const adminAddress = "GCBG5RYG4CLLK675OPO4MUENCBCQIIDYY7WVB5J5D5IIWWTNKIRWEOEZ"
+    // const tx = await helloWorld.addAdmin({admin_adress:adminAddress});
+    const tx = await helloWorld.hello();
+    const {result} = await tx.signAndSend({force:true});
+    console.log(result)
+  }
+  const add_Multiple= async() =>{
+  let amount1 = new XdrLargeInt("i128",600000000);
+  let amount2 = new XdrLargeInt("i128",500000000);
+  let dat1 =   {
+      token_address:"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC", // Initialize with appropriate values
+      amounts: amount1.toBigInt(),
+      benificary:"GCWOV73MMIZO7JYOYLRZZZ2QLGFYFL2B45RP5PUMR45TBO23URGIXYWS", // Initialize with appropriate values
+  }
+  let dat2 =   {
+    token_address:"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    amounts:amount2.toBigInt(),
+    benificary:"GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B", 
+}
+    // const data = [dataa,dataaa]
+    const tx = await helloWorld.addMultipleAsset({data:[dat1,dat2],from:publicKey})
+    const {result} = await tx.signAndSend();
+  }
+  const claim_Asset = async ()=>{
+    const tx = await helloWorld.claimAsset({from:"GAOWQIPEENZNPTVZNWQRBJQ36XQSQQHMJFRGW5DQJJQGTSH5VUR35RI3",claimer:publicKey,message:message.toBuffer(),address:adminPublicKey.toBuffer(),signature:signs.signature()})
+    const {result} = await tx.signAndSend();
+    console.log(result)
   }
   return (
     <>
-{/* 
-      <div>{greeting}</div> */}
+
+      {/* <div>{greeting}</div> */}
       <h1>{value}</h1>
       <FreighterComponent/>
       <div>
-      <button onClick={Decrement}>Decrement</button>
+      <button onClick={approval}>claim</button>
       <button onClick={Increment}>Increment</button>
+
       </div>
+      <div>
+      <h1>Admi purpose:Add address</h1>
+        <button onClick={addAdmin}>Add admin</button>
+      </div>
+      <div>
+        <h1>Add asset:test version</h1>
+        <button onClick={add_Multiple}>Add Multiple</button>
+      </div>
+      <div>
+        <h1>Claim assets:test version</h1>
+        <button onClick={claim_Asset}>Claim assets benificary</button> 
+        {/* <button onClick={}>Claim assets benificary 2</button> */}
+      </div> 
     </>
   );
 }

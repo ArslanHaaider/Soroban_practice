@@ -27,7 +27,7 @@ if (typeof window !== 'undefined') {
 exports.networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CAU5WBPCOWZO2EMNPRZIVTPX5D6YSGO7I3QTBHFDP2L374OSX6VEK2VO",
+        contractId: "CAPHZWKTGQEYWWXDWGC7XH6YP6X36LJLSGRX6JNZV37JG2GITP634EPA",
     }
 };
 /**
@@ -43,14 +43,16 @@ class Contract {
             "AAAAAAAAAAAAAAAHaGVsbG9vbwAAAAABAAAAAAAAAAJ0bwAAAAAAEQAAAAEAAAPqAAAAEQ==",
             "AAAAAAAAAAAAAAAJZGVjcmVtZW50AAAAAAAAAAAAAAEAAAAE",
             "AAAAAAAAAAAAAAAJaW5jcmVtZW50AAAAAAAAAAAAAAEAAAAE",
-            "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAAA"
+            "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAABAAAAAQ==",
+            "AAAAAAAAAAAAAAAIYXBwcm92YWwAAAAEAAAAAAAAAA10b2tlbl9hZGRyZXNzAAAAAAAAEwAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB3NwZW5kZXIAAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA=="
         ]);
     }
     parsers = {
         hellooo: (result) => this.spec.funcResToNative("hellooo", result),
         decrement: (result) => this.spec.funcResToNative("decrement", result),
         increment: (result) => this.spec.funcResToNative("increment", result),
-        verifySignature: () => { }
+        verifySignature: (result) => this.spec.funcResToNative("verify_signature", result),
+        approval: () => { }
     };
     txFromJSON = (json) => {
         const { method, ...tx } = JSON.parse(json);
@@ -64,7 +66,8 @@ class Contract {
         hellooo: (this.txFromJSON),
         decrement: (this.txFromJSON),
         increment: (this.txFromJSON),
-        verifySignature: (this.txFromJSON)
+        verifySignature: (this.txFromJSON),
+        approval: (this.txFromJSON)
     };
     /**
 * Construct and simulate a hellooo transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -116,6 +119,19 @@ class Contract {
             ...this.options,
             errorTypes: exports.Errors,
             parseResultXdr: this.parsers['verifySignature'],
+        });
+    };
+    /**
+* Construct and simulate a approval transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+*/
+    approval = async ({ token_address, from, spender, amount }, options = {}) => {
+        return await assembled_tx_js_1.AssembledTransaction.fromSimulation({
+            method: 'approval',
+            args: this.spec.funcArgsToScVals("approval", { token_address: new stellar_sdk_1.Address(token_address), from: new stellar_sdk_1.Address(from), spender: new stellar_sdk_1.Address(spender), amount }),
+            ...options,
+            ...this.options,
+            errorTypes: exports.Errors,
+            parseResultXdr: this.parsers['approval'],
         });
     };
 }
