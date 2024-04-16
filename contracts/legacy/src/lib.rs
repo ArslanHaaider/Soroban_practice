@@ -1,4 +1,5 @@
 #![no_std]
+
 use soroban_sdk::{
     bytes, bytesn, contract, contractimpl, contracttype,contracterror, log, symbol_short, token, vec, Address, Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec
 };
@@ -121,7 +122,7 @@ impl Legacy {
         signature: BytesN<64>,
     ){
         claimer.require_auth();
-        // env.crypto().ed25519_verify(&address, &message, &signature);
+        env.crypto().ed25519_verify(&address,&message,&signature);
         if env.storage().persistent().has(&from) {
             let default_map: Map<Address, Vec<(Address, i128)>> = Map::new(&env);
             //fetching the will map which has all the information regard to benificiary
@@ -143,7 +144,14 @@ impl Legacy {
             // Err(Error::NO_WILL_EXIST)
         }
     }
-    pub fn hello(env: Env) -> bool {
+    pub fn verify_signature(env:Env,message:Bytes,address:BytesN<32>,signature:BytesN<64>) -> bool{
+        //will panic if verification fails
+         env.crypto().ed25519_verify(&address,&message,&signature);
+        // else it will reuturn true;
+         true
+        }
+    //to mimic the signiing of the signature
+    pub fn test_admin_sign(env: Env) -> bool {
         true
     }
 }

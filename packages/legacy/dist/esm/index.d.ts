@@ -8,7 +8,7 @@ export * from './method-options.js';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CA6TDUVVHIKYMNIC6ZCX2N264SVWTURGBQE6UYIWY2GNNETA4CFWXBJS";
+        readonly contractId: "CBEEEEL3UCQ32U3PGDXCE4TZLU2NOXGAOGVOOCBT6CQE3QNOC3GVCNZ4";
     };
 };
 /**
@@ -57,6 +57,7 @@ export declare class Contract {
         approval: (json: string) => AssembledTransaction<void>;
         addMultipleAsset: (json: string) => AssembledTransaction<void>;
         claimAsset: (json: string) => AssembledTransaction<void>;
+        verifySignature: (json: string) => AssembledTransaction<boolean>;
         hello: (json: string) => AssembledTransaction<boolean>;
     };
     /**
@@ -122,6 +123,19 @@ export declare class Contract {
          */
         fee?: number;
     }) => Promise<AssembledTransaction<void>>;
+    /**
+* Construct and simulate a verify_signature transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+*/
+    verifySignature: ({ message, address, signature }: {
+        message: Buffer;
+        address: Buffer;
+        signature: Buffer;
+    }, options?: {
+        /**
+         * The fee to pay for the transaction. Default: 100.
+         */
+        fee?: number;
+    }) => Promise<AssembledTransaction<boolean>>;
     /**
 * Construct and simulate a hello transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
 */

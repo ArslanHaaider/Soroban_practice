@@ -27,7 +27,7 @@ if (typeof window !== 'undefined') {
 exports.networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CA6TDUVVHIKYMNIC6ZCX2N264SVWTURGBQE6UYIWY2GNNETA4CFWXBJS",
+        contractId: "CBEEEEL3UCQ32U3PGDXCE4TZLU2NOXGAOGVOOCBT6CQE3QNOC3GVCNZ4",
     }
 };
 /**
@@ -50,6 +50,7 @@ class Contract {
             "AAAAAAAAAAAAAAAIYXBwcm92YWwAAAAEAAAAAAAAAA10b2tlbl9hZGRyZXNzAAAAAAAAEwAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB3NwZW5kZXIAAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
             "AAAAAAAAAAAAAAASYWRkX211bHRpcGxlX2Fzc2V0AAAAAAACAAAAAAAAAARkYXRhAAAD6gAAB9AAAAAKYmVuaWZpY2FyeQAAAAAAAAAAAARmcm9tAAAAEwAAAAA=",
             "AAAAAAAAAAAAAAALY2xhaW1fYXNzZXQAAAAABQAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB2NsYWltZXIAAAAAEwAAAAAAAAAHbWVzc2FnZQAAAAAOAAAAAAAAAAdhZGRyZXNzAAAAA+4AAAAgAAAAAAAAAAlzaWduYXR1cmUAAAAAAAPuAAAAQAAAAAA=",
+            "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAABAAAAAQ==",
             "AAAAAAAAAAAAAAAFaGVsbG8AAAAAAAAAAAAAAQAAAAE="
         ]);
     }
@@ -59,6 +60,7 @@ class Contract {
         approval: () => { },
         addMultipleAsset: () => { },
         claimAsset: () => { },
+        verifySignature: (result) => this.spec.funcResToNative("verify_signature", result),
         hello: (result) => this.spec.funcResToNative("hello", result)
     };
     txFromJSON = (json) => {
@@ -75,6 +77,7 @@ class Contract {
         approval: (this.txFromJSON),
         addMultipleAsset: (this.txFromJSON),
         claimAsset: (this.txFromJSON),
+        verifySignature: (this.txFromJSON),
         hello: (this.txFromJSON)
     };
     /**
@@ -140,6 +143,19 @@ class Contract {
             ...this.options,
             errorTypes: exports.Errors,
             parseResultXdr: this.parsers['claimAsset'],
+        });
+    };
+    /**
+* Construct and simulate a verify_signature transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+*/
+    verifySignature = async ({ message, address, signature }, options = {}) => {
+        return await assembled_tx_js_1.AssembledTransaction.fromSimulation({
+            method: 'verify_signature',
+            args: this.spec.funcArgsToScVals("verify_signature", { message, address, signature }),
+            ...options,
+            ...this.options,
+            errorTypes: exports.Errors,
+            parseResultXdr: this.parsers['verifySignature'],
         });
     };
     /**

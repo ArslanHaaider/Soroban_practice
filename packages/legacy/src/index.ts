@@ -30,7 +30,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CA6TDUVVHIKYMNIC6ZCX2N264SVWTURGBQE6UYIWY2GNNETA4CFWXBJS",
+        contractId: "CBEEEEL3UCQ32U3PGDXCE4TZLU2NOXGAOGVOOCBT6CQE3QNOC3GVCNZ4",
     }
 } as const
 
@@ -81,6 +81,7 @@ export class Contract {
         "AAAAAAAAAAAAAAAIYXBwcm92YWwAAAAEAAAAAAAAAA10b2tlbl9hZGRyZXNzAAAAAAAAEwAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB3NwZW5kZXIAAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
         "AAAAAAAAAAAAAAASYWRkX211bHRpcGxlX2Fzc2V0AAAAAAACAAAAAAAAAARkYXRhAAAD6gAAB9AAAAAKYmVuaWZpY2FyeQAAAAAAAAAAAARmcm9tAAAAEwAAAAA=",
         "AAAAAAAAAAAAAAALY2xhaW1fYXNzZXQAAAAABQAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB2NsYWltZXIAAAAAEwAAAAAAAAAHbWVzc2FnZQAAAAAOAAAAAAAAAAdhZGRyZXNzAAAAA+4AAAAgAAAAAAAAAAlzaWduYXR1cmUAAAAAAAPuAAAAQAAAAAA=",
+        "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAABAAAAAQ==",
         "AAAAAAAAAAAAAAAFaGVsbG8AAAAAAAAAAAAAAQAAAAE="
         ]);
     }
@@ -90,6 +91,7 @@ export class Contract {
         approval: () => {},
         addMultipleAsset: () => {},
         claimAsset: () => {},
+        verifySignature: (result: XDR_BASE64): boolean => this.spec.funcResToNative("verify_signature", result),
         hello: (result: XDR_BASE64): boolean => this.spec.funcResToNative("hello", result)
     };
     private txFromJSON = <T>(json: string): AssembledTransaction<T> => {
@@ -109,6 +111,7 @@ export class Contract {
         approval: this.txFromJSON<ReturnType<typeof this.parsers['approval']>>,
         addMultipleAsset: this.txFromJSON<ReturnType<typeof this.parsers['addMultipleAsset']>>,
         claimAsset: this.txFromJSON<ReturnType<typeof this.parsers['claimAsset']>>,
+        verifySignature: this.txFromJSON<ReturnType<typeof this.parsers['verifySignature']>>,
         hello: this.txFromJSON<ReturnType<typeof this.parsers['hello']>>
     }
         /**
@@ -207,6 +210,26 @@ export class Contract {
             ...this.options,
             errorTypes: Errors,
             parseResultXdr: this.parsers['claimAsset'],
+        });
+    }
+
+
+        /**
+    * Construct and simulate a verify_signature transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+    */
+    verifySignature = async ({message, address, signature}: {message: Buffer, address: Buffer, signature: Buffer}, options: {
+        /**
+         * The fee to pay for the transaction. Default: 100.
+         */
+        fee?: number,
+    } = {}) => {
+        return await AssembledTransaction.fromSimulation({
+            method: 'verify_signature',
+            args: this.spec.funcArgsToScVals("verify_signature", {message, address, signature}),
+            ...options,
+            ...this.options,
+            errorTypes: Errors,
+            parseResultXdr: this.parsers['verifySignature'],
         });
     }
 
