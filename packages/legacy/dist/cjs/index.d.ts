@@ -8,7 +8,7 @@ export * from './method-options.js';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CBEEEEL3UCQ32U3PGDXCE4TZLU2NOXGAOGVOOCBT6CQE3QNOC3GVCNZ4";
+        readonly contractId: "CCVTM7F7QTZVMY6AIR6O5MCTJP6Z3W7SMRZYMB55OGCIGOTTTYS763IY";
     };
 };
 /**
@@ -43,7 +43,7 @@ export interface admin {
     /**
       
       */
-    admins: Array<string>;
+    admins: Array<Buffer>;
 }
 export declare class Contract {
     readonly options: ClassOptions;
@@ -58,13 +58,13 @@ export declare class Contract {
         addMultipleAsset: (json: string) => AssembledTransaction<void>;
         claimAsset: (json: string) => AssembledTransaction<void>;
         verifySignature: (json: string) => AssembledTransaction<boolean>;
-        hello: (json: string) => AssembledTransaction<boolean>;
+        testAdminSign: (json: string) => AssembledTransaction<boolean>;
     };
     /**
 * Construct and simulate a add_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
 */
     addAdmin: ({ admin_adress }: {
-        admin_adress: string;
+        admin_adress: Buffer;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: 100.
@@ -75,7 +75,7 @@ export declare class Contract {
 * Construct and simulate a is_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
 */
     isAdmin: ({ admin_adress }: {
-        admin_adress: string;
+        admin_adress: Buffer;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: 100.
@@ -137,9 +137,9 @@ export declare class Contract {
         fee?: number;
     }) => Promise<AssembledTransaction<boolean>>;
     /**
-* Construct and simulate a hello transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+* Construct and simulate a test_admin_sign transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
 */
-    hello: (options?: {
+    testAdminSign: (options?: {
         /**
          * The fee to pay for the transaction. Default: 100.
          */

@@ -1,5 +1,4 @@
 #![no_std]
-
 use soroban_sdk::{
  contract, contractimpl, contracttype,contracterror, log, symbol_short, token, vec, Address, Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec
 };
@@ -21,7 +20,7 @@ pub struct benificary {
 }
 #[contracttype]
 pub struct admin {
-    admins: Vec<Address>,
+    admins: Vec<BytesN<32>>,
 }
 
 pub fn add_asset(
@@ -56,30 +55,21 @@ pub fn add_asset(
     //adding the new benificary and its asset to contract storage
     env.storage().persistent().set(&from, &will_map);
 }
-pub fn transfer(env: Env, token_address: Address, from: Address, spender: Address, amount: i128) {
-    from.require_auth();
-    let client = token::Client::new(&env, &token_address);
-    let balance = client.balance(&from);
-    if balance > amount {
-        client.transfer(&from, &spender, &amount);
-    } else {
-        panic!("no enough amount present")
-    }
-}
+
 #[contractimpl]
 impl Legacy {
-    pub fn add_admin(env: Env, admin_adress: Address) {
-        let copy_admin: Address = admin_adress.clone();
+    pub fn add_admin(env: Env, admin_adress: BytesN<32>) {
+        let copy_admin: BytesN<32> = admin_adress.clone();
         let mut admin_list: admin = env.storage().persistent().get(&ADMIN).unwrap_or({
             admin {
                 admins: vec![&env, admin_adress],
             }
         });
-        let new_admin: Vec<Address> = vec![&env, copy_admin];
+        let new_admin: Vec<BytesN<32>> = vec![&env, copy_admin];
         admin_list.admins.append(&new_admin);
         env.storage().persistent().set(&ADMIN, &admin_list);
     }
-    pub fn is_admin(env: Env, admin_adress: Address) -> bool {
+    pub fn is_admin(env: Env, admin_adress: BytesN<32>) -> bool {
         let mut admin_list: admin = env.storage().persistent().get(&ADMIN).unwrap();
         admin_list.admins.contains(&admin_adress)
     }
@@ -126,7 +116,13 @@ impl Legacy {
         signature: BytesN<64>,
     ){
         claimer.require_auth();
+        let admins_list = env.storage().persistent().get(&ADMIN).unwrap_or(admin{
+            admins:vec![&env],
+        });
+        //first verifies the admin signatures 
         env.crypto().ed25519_verify(&address,&message,&signature);
+        //than we will see if this is even a admin or not!
+        admins_list.admins.contains(&address);  
         if env.storage().persistent().has(&from) {
             let default_map: Map<Address, Vec<(Address, i128)>> = Map::new(&env);
             //fetching the will map which has all the information regard to benificiary

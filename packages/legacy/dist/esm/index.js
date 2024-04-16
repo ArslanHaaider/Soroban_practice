@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
 export const networks = {
     testnet: {
         networkPassphrase: "Test SDF Network ; September 2015",
-        contractId: "CBEEEEL3UCQ32U3PGDXCE4TZLU2NOXGAOGVOOCBT6CQE3QNOC3GVCNZ4",
+        contractId: "CCVTM7F7QTZVMY6AIR6O5MCTJP6Z3W7SMRZYMB55OGCIGOTTTYS763IY",
     }
 };
 /**
@@ -27,14 +27,14 @@ export class Contract {
         this.spec = new ContractSpec([
             "AAAABAAAAAAAAAAAAAAABUVycm9yAAAAAAAAAQAAAAAAAAANTk9fV0lMTF9FWElTVAAAAAAAAAE=",
             "AAAAAQAAAAAAAAAAAAAACmJlbmlmaWNhcnkAAAAAAAMAAAAAAAAAB2Ftb3VudHMAAAAACwAAAAAAAAAKYmVuaWZpY2FyeQAAAAAAEwAAAAAAAAANdG9rZW5fYWRkcmVzcwAAAAAAABM=",
-            "AAAAAQAAAAAAAAAAAAAABWFkbWluAAAAAAAAAQAAAAAAAAAGYWRtaW5zAAAAAAPqAAAAEw==",
-            "AAAAAAAAAAAAAAAJYWRkX2FkbWluAAAAAAAAAQAAAAAAAAAMYWRtaW5fYWRyZXNzAAAAEwAAAAA=",
-            "AAAAAAAAAAAAAAAIaXNfYWRtaW4AAAABAAAAAAAAAAxhZG1pbl9hZHJlc3MAAAATAAAAAQAAAAE=",
+            "AAAAAQAAAAAAAAAAAAAABWFkbWluAAAAAAAAAQAAAAAAAAAGYWRtaW5zAAAAAAPqAAAD7gAAACA=",
+            "AAAAAAAAAAAAAAAJYWRkX2FkbWluAAAAAAAAAQAAAAAAAAAMYWRtaW5fYWRyZXNzAAAD7gAAACAAAAAA",
+            "AAAAAAAAAAAAAAAIaXNfYWRtaW4AAAABAAAAAAAAAAxhZG1pbl9hZHJlc3MAAAPuAAAAIAAAAAEAAAAB",
             "AAAAAAAAAAAAAAAIYXBwcm92YWwAAAAEAAAAAAAAAA10b2tlbl9hZGRyZXNzAAAAAAAAEwAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB3NwZW5kZXIAAAAAEwAAAAAAAAAGYW1vdW50AAAAAAALAAAAAA==",
             "AAAAAAAAAAAAAAASYWRkX211bHRpcGxlX2Fzc2V0AAAAAAACAAAAAAAAAARkYXRhAAAD6gAAB9AAAAAKYmVuaWZpY2FyeQAAAAAAAAAAAARmcm9tAAAAEwAAAAA=",
             "AAAAAAAAAAAAAAALY2xhaW1fYXNzZXQAAAAABQAAAAAAAAAEZnJvbQAAABMAAAAAAAAAB2NsYWltZXIAAAAAEwAAAAAAAAAHbWVzc2FnZQAAAAAOAAAAAAAAAAdhZGRyZXNzAAAAA+4AAAAgAAAAAAAAAAlzaWduYXR1cmUAAAAAAAPuAAAAQAAAAAA=",
             "AAAAAAAAAAAAAAAQdmVyaWZ5X3NpZ25hdHVyZQAAAAMAAAAAAAAAB21lc3NhZ2UAAAAADgAAAAAAAAAHYWRkcmVzcwAAAAPuAAAAIAAAAAAAAAAJc2lnbmF0dXJlAAAAAAAD7gAAAEAAAAABAAAAAQ==",
-            "AAAAAAAAAAAAAAAFaGVsbG8AAAAAAAAAAAAAAQAAAAE="
+            "AAAAAAAAAAAAAAAPdGVzdF9hZG1pbl9zaWduAAAAAAAAAAABAAAAAQ=="
         ]);
     }
     parsers = {
@@ -44,7 +44,7 @@ export class Contract {
         addMultipleAsset: () => { },
         claimAsset: () => { },
         verifySignature: (result) => this.spec.funcResToNative("verify_signature", result),
-        hello: (result) => this.spec.funcResToNative("hello", result)
+        testAdminSign: (result) => this.spec.funcResToNative("test_admin_sign", result)
     };
     txFromJSON = (json) => {
         const { method, ...tx } = JSON.parse(json);
@@ -61,7 +61,7 @@ export class Contract {
         addMultipleAsset: (this.txFromJSON),
         claimAsset: (this.txFromJSON),
         verifySignature: (this.txFromJSON),
-        hello: (this.txFromJSON)
+        testAdminSign: (this.txFromJSON)
     };
     /**
 * Construct and simulate a add_admin transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -69,7 +69,7 @@ export class Contract {
     addAdmin = async ({ admin_adress }, options = {}) => {
         return await AssembledTransaction.fromSimulation({
             method: 'add_admin',
-            args: this.spec.funcArgsToScVals("add_admin", { admin_adress: new Address(admin_adress) }),
+            args: this.spec.funcArgsToScVals("add_admin", { admin_adress }),
             ...options,
             ...this.options,
             errorTypes: Errors,
@@ -82,7 +82,7 @@ export class Contract {
     isAdmin = async ({ admin_adress }, options = {}) => {
         return await AssembledTransaction.fromSimulation({
             method: 'is_admin',
-            args: this.spec.funcArgsToScVals("is_admin", { admin_adress: new Address(admin_adress) }),
+            args: this.spec.funcArgsToScVals("is_admin", { admin_adress }),
             ...options,
             ...this.options,
             errorTypes: Errors,
@@ -142,16 +142,16 @@ export class Contract {
         });
     };
     /**
-* Construct and simulate a hello transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+* Construct and simulate a test_admin_sign transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
 */
-    hello = async (options = {}) => {
+    testAdminSign = async (options = {}) => {
         return await AssembledTransaction.fromSimulation({
-            method: 'hello',
-            args: this.spec.funcArgsToScVals("hello", {}),
+            method: 'test_admin_sign',
+            args: this.spec.funcArgsToScVals("test_admin_sign", {}),
             ...options,
             ...this.options,
             errorTypes: Errors,
-            parseResultXdr: this.parsers['hello'],
+            parseResultXdr: this.parsers['testAdminSign'],
         });
     };
 }

@@ -21,6 +21,7 @@ import {
   Address,
   Transaction,
 } from "@stellar/stellar-sdk";
+import legacy from "./contracts/legacy";
 
 function App() {
   const [value, setValue] = useState(0);
@@ -163,10 +164,10 @@ function App() {
     console.log(getTransactionResponseAll);
   };
   const addAdmin = async () => {
-    const adminAddress =
-      "GCBG5RYG4CLLK675OPO4MUENCBCQIIDYY7WVB5J5D5IIWWTNKIRWEOEZ";
-    // const tx = await helloWorld.addAdmin({admin_adress:adminAddress});
-    const tx = await Legacy.hello();
+    const adminAddress =new Address("GDZ2WJCDM5I7YZF7KHQ3Z5ZCLNXY5KF7OFDJJVQANT3LRYE6W4KMMN7W");
+
+    const tx = await legacy.addAdmin({admin_adress:adminAddress.toBuffer()});
+    // const tx = await Legacy.hello();
     const { result } = await tx.signAndSend({ force: true });
     console.log(result);
   };
