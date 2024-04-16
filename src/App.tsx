@@ -1,5 +1,5 @@
 import React, { useState, } from "react";
-import helloWorld from "./contracts/legacy";
+import Legacy from "./contracts/legacy";
 import FreighterComponent from "./components/ConnectFreighter";
 import {
   isConnected,
@@ -19,13 +19,7 @@ import {
   XdrLargeInt,
   nativeToScVal,
   Address,
-  Memo,
   Transaction,
-  ScInt,
-  sign,
-  MemoType,
-  Operation,
-  Account,
 } from "@stellar/stellar-sdk";
 
 function App() {
@@ -158,7 +152,7 @@ function App() {
   const Increment = async () => {
     let amounts = new XdrLargeInt("i128", 20);
     //second way to call contract just using the client we imported
-    const tx = await helloWorld.approval({
+    const tx = await Legacy.approval({
       token_address: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       from: publicKey,
       spender: "GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B",
@@ -172,7 +166,7 @@ function App() {
     const adminAddress =
       "GCBG5RYG4CLLK675OPO4MUENCBCQIIDYY7WVB5J5D5IIWWTNKIRWEOEZ";
     // const tx = await helloWorld.addAdmin({admin_adress:adminAddress});
-    const tx = await helloWorld.hello();
+    const tx = await Legacy.hello();
     const { result } = await tx.signAndSend({ force: true });
     console.log(result);
   };
@@ -192,7 +186,7 @@ function App() {
     // const data = [dataa,dataaa]
     let  publicKey = await getPublicKey();
 
-    const tx = await helloWorld.addMultipleAsset({
+    const tx = await Legacy.addMultipleAsset({
       data: [dat1, dat2],
       from: publicKey,
     });
@@ -206,7 +200,7 @@ function App() {
   const claim_Asset = async () => {
 
     let  publicKey = await getPublicKey();
-    const tx = await helloWorld.claimAsset({
+    const tx = await Legacy.claimAsset({
       from: "GAOWQIPEENZNPTVZNWQRBJQ36XQSQQHMJFRGW5DQJJQGTSH5VUR35RI3",
       claimer: publicKey,
       message: messageHash,

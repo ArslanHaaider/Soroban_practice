@@ -1,7 +1,7 @@
 #![no_std]
 
 use soroban_sdk::{
-    bytes, bytesn, contract, contractimpl, contracttype,contracterror, log, symbol_short, token, vec, Address, Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec
+ contract, contractimpl, contracttype,contracterror, log, symbol_short, token, vec, Address, Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec
 };
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -34,7 +34,11 @@ pub fn add_asset(
     let client = token::Client::new(&env, &token_address);
     let balance = client.balance(&from);
     if balance > amount {
+        let event = env.events();
+        let topic = ("transfer",&from,&env.current_contract_address());
         client.transfer(&from, &env.current_contract_address(), &amount);
+        event.publish(topic, amount);
+
     } else {
         panic!("no enough amount present")
     }
@@ -132,11 +136,14 @@ impl Legacy {
             assert_eq!(will_map.contains_key(claimer.clone()), true);
             // //getting curruent information about the benificiary and allowed assets
             let mut benificary_assets: Vec<(Address, i128)> = will_map.get(claimer.clone()).unwrap_or(vec![&env]);
+            //will run a loop over all assets assingeed to the
             for assets in benificary_assets {
                 let (token_Addresss, amount) = assets;
+                let event = env.events();
+                let topic = ("transfer",&env.current_contract_address(),&claimer);
                 let client = token::Client::new(&env, &token_Addresss);
-                // let balance = client.balance(&env.current_contract_address());
                 client.transfer(&env.current_contract_address(), &claimer, &amount);
+                event.publish(topic,amount);
             }
             will_map.remove(claimer);
             env.storage().persistent().set(&from, &will_map);
