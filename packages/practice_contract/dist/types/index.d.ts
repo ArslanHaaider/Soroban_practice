@@ -8,7 +8,7 @@ export * from './method-options.js';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CDBFYKS2YCJSRHBP65LTTKSRFY5SOXTWQAVZSW6VO36U5ZZESTB5ULLN";
+        readonly contractId: "CBI4F7XXBZ5SMO3UULP6D6NAGEXX7RS3BNUGDIF2OJZCXCESFITEED4J";
     };
 };
 /**

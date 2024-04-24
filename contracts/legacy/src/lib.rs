@@ -1,13 +1,8 @@
 #![no_std]
 use soroban_sdk::{
- contract, contractimpl, contracttype,contracterror, log, symbol_short, token, vec, Address, Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec
+    contract, contracterror, contractimpl, contracttype, log, symbol_short, token, vec, Address,
+    Bytes, BytesN, Env, FromVal, Map, String, Symbol, Val, Vec,
 };
-#[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-#[repr(u32)]
-pub enum Error {
-    NO_WILL_EXIST = 1,
-}
 const ADMIN: Symbol = symbol_short!("ADMIN");
 #[contract]
 pub struct Legacy;
@@ -34,10 +29,9 @@ pub fn add_asset(
     let balance = client.balance(&from);
     if balance > amount {
         let event = env.events();
-        let topic = ("transfer",&from,&env.current_contract_address());
+        let topic = ("transfer", &from, &env.current_contract_address());
         client.transfer(&from, &env.current_contract_address(), &amount);
         event.publish(topic, amount);
-
     } else {
         panic!("no enough amount present")
     }
@@ -69,28 +63,6 @@ impl Legacy {
         admin_list.admins.append(&new_admin);
         env.storage().persistent().set(&ADMIN, &admin_list);
     }
-    pub fn is_admin(env: Env, admin_adress: BytesN<32>) -> bool {
-        let mut admin_list: admin = env.storage().persistent().get(&ADMIN).unwrap();
-        admin_list.admins.contains(&admin_adress)
-    }
-    pub fn approval(
-        env: Env,
-        token_address: Address,
-        from: Address,
-        spender: Address,
-        amount: i128,
-    ) {
-        from.require_auth();
-        let ledger = env.ledger().sequence();
-        let expiration_ledger: u32 = ledger + 1000;
-        let client = token::Client::new(&env, &token_address);
-        let balance = client.balance(&from);
-        if balance > amount {
-            client.approve(&from, &spender, &amount, &expiration_ledger);
-        } else {
-            panic!("no enough amount present")
-        }
-    }
 
     pub fn add_multiple_asset(env: Env, data: Vec<benificary>, from: Address) {
         from.require_auth();
@@ -114,15 +86,17 @@ impl Legacy {
         message: Bytes,
         address: BytesN<32>,
         signature: BytesN<64>,
-    ){
+    ) {
         claimer.require_auth();
-        let admins_list = env.storage().persistent().get(&ADMIN).unwrap_or(admin{
-            admins:vec![&env],
-        });
-        //first verifies the admin signatures 
-        env.crypto().ed25519_verify(&address,&message,&signature);
+        let admins_list = env
+            .storage()
+            .persistent()
+            .get(&ADMIN)
+            .unwrap_or(admin { admins: vec![&env] });
+        //first verifies the admin signatures
+        env.crypto().ed25519_verify(&address, &message, &signature);
         //than we will see if this is even a admin or not!
-        admins_list.admins.contains(&address);  
+        admins_list.admins.contains(&address);
         if env.storage().persistent().has(&from) {
             let default_map: Map<Address, Vec<(Address, i128)>> = Map::new(&env);
             //fetching the will map which has all the information regard to benificiary
@@ -131,15 +105,16 @@ impl Legacy {
             // //find out if claimer is the benificary or not
             assert_eq!(will_map.contains_key(claimer.clone()), true);
             // //getting curruent information about the benificiary and allowed assets
-            let mut benificary_assets: Vec<(Address, i128)> = will_map.get(claimer.clone()).unwrap_or(vec![&env]);
+            let mut benificary_assets: Vec<(Address, i128)> =
+                will_map.get(claimer.clone()).unwrap_or(vec![&env]);
             //will run a loop over all assets assingeed to the
             for assets in benificary_assets {
                 let (token_Addresss, amount) = assets;
                 let event = env.events();
-                let topic = ("transfer",&env.current_contract_address(),&claimer);
+                let topic = ("transfer", &env.current_contract_address(), &claimer);
                 let client = token::Client::new(&env, &token_Addresss);
                 client.transfer(&env.current_contract_address(), &claimer, &amount);
-                event.publish(topic,amount);
+                event.publish(topic, amount);
             }
             will_map.remove(claimer);
             env.storage().persistent().set(&from, &will_map);
@@ -147,12 +122,6 @@ impl Legacy {
             // Err(Error::NO_WILL_EXIST)
         }
     }
-    pub fn verify_signature(env:Env,message:Bytes,address:BytesN<32>,signature:BytesN<64>) -> bool{
-        //will panic if verification fails
-         env.crypto().ed25519_verify(&address,&message,&signature);
-        // else it will reuturn true;
-         true
-        }
     //to mimic the signiing of the signature
     pub fn test_admin_sign(env: Env) -> bool {
         true

@@ -37,7 +37,7 @@ function App() {
       "https://soroban-testnet.stellar.org:443",
     );
     const contractAddress =
-    "CCYTZEBUEJTLIOCE5EZJS24NOH2BSCLG24KDDVE74A2A7GWTYUSA6GC2";
+    "CDD6ODQOX7GEJOYW6DZ7KDSXPELJOPSYLOLMOGH22JPOZ33JOCWWK2EJ";
     const contract = new Contract(contractAddress);
     // Transactions require a valid sequence number (which varies from one
     // account to another). We fetch this sequence number from the RPC server.
@@ -50,7 +50,7 @@ function App() {
     let builtTransaction = new TransactionBuilder(sourceAccount, {
       fee: BASE_FEE,
       networkPassphrase: Networks.TESTNET,
-    }).addOperation(contract.call("hello"))
+    }).addOperation(contract.call("test_admin_sign"))
     .setTimeout(300)
       .build();
   
@@ -64,105 +64,6 @@ function App() {
     const txEnvelope = xdr.TransactionEnvelope.fromXDR(transaction, 'base64');
         signature = txEnvelope.v1().signatures()[0].signature();
   }
-
-  const approval = async () => {
-    const server = new SorobanRpc.Server(
-      "https://soroban-testnet.stellar.org:443"
-    );
-    const sourceAccount = await server.getAccount(publicKey);
-    const xlmSac = new Address(
-      "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
-    );
-    const Account2 = new Address(
-      "GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B"
-    );
-    const userAddress = new Address(publicKey);
-    const owner = new Address(
-      "GCWOV73MMIZO7JYOYLRZZZ2QLGFYFL2B45RP5PUMR45TBO23URGIXYWS"
-    );
-    let amount = new XdrLargeInt("i128", 200000000);
-    let amountScVal = amount.toI128();
-    console.log(publicKey);
-    const contractsAddress = new Address(contractAddress);
-    const contract = new Contract(contractAddress.toString());
-
-    let builtTransaction = new TransactionBuilder(sourceAccount, {
-      fee: BASE_FEE,
-      networkPassphrase: Networks.TESTNET,
-    })
-      .addOperation(
-        contract.call(
-          "claim_asset",
-          nativeToScVal(owner),
-          nativeToScVal(userAddress)
-        )
-      )
-      .setTimeout(30)
-      .build();
-    console.log(`builtTransaction=${builtTransaction.toXDR()}`);
-
-    let preparedTransaction = await server.prepareTransaction(builtTransaction);
-    // let messageHash = preparedTransaction.hash();
-    let xdrString = preparedTransaction.toEnvelope().toXDR("base64");
-    const transaction = await signTransaction(xdrString, {
-      networkPassphrase: Networks.TESTNET,
-    });
-    console.log("Signed transaction Xdr", transaction);
-    const txEnvelope = xdr.TransactionEnvelope.fromXDR(transaction, "base64");
-    const tx = new Transaction(txEnvelope, Networks.TESTNET);
-    console.log("txXdr", tx.toEnvelope().toXDR("base64"));
-    try {
-      let sendResponse = await server.sendTransaction(tx);
-      console.log(`Sent transaction: ${JSON.stringify(sendResponse)}`);
-
-      if (sendResponse.status === "PENDING") {
-        let getResponse = await server.getTransaction(sendResponse.hash);
-        // Poll `getTransaction` until the status is not "NOT_FOUND"
-        while (getResponse.status === "NOT_FOUND") {
-          console.log("Waiting for transaction confirmation...");
-          // See if the transaction is complete
-          getResponse = await server.getTransaction(sendResponse.hash);
-          // Wait one second
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-
-        console.log(`getTransaction response: ${JSON.stringify(getResponse)}`);
-
-        if (getResponse.status === "SUCCESS") {
-          // Make sure the transaction's resultMetaXDR is not empty
-          if (!getResponse.resultMetaXdr) {
-            throw "Empty resultMetaXDR in getTransaction response";
-          }
-          // Find the return value from the contract and return it
-          let transactionMeta = getResponse.resultMetaXdr;
-          let returnValue = transactionMeta.v3().sorobanMeta()?.returnValue();
-          console.log(`Transaction result: ${returnValue?.value()}`);
-        } else {
-          throw `Transaction failed: ${getResponse.resultXdr}`;
-        }
-      } else {
-        throw sendResponse.errorResult;
-      }
-    } catch (err) {
-      // Catch and report any errors we've thrown
-      console.log("Sending transaction failed");
-      console.log(JSON.stringify(err));
-    }
-  };
-
-  const Increment = async () => {
-    let amounts = new XdrLargeInt("i128", 20);
-    //second way to call contract just using the client we imported
-    const tx = await Legacy.approval({
-      token_address: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-      from: publicKey,
-      spender: "GDZDWPRWGMAVTNWBERD667PQ3BPCGIHEFQET6RRI4MZUS77ASHJMPT7B",
-      amount: amounts.toBigInt(),
-    });
-    // const tx = await helloWorld.increment();
-    const { getTransactionResponseAll } = await tx.signAndSend();
-    console.log(getTransactionResponseAll);
-  };
   const addAdmin = async () => {
     const adminAddress =new Address("GDZ2WJCDM5I7YZF7KHQ3Z5ZCLNXY5KF7OFDJJVQANT3LRYE6W4KMMN7W");
 
@@ -218,8 +119,6 @@ function App() {
       <h1>{value}</h1>
       <FreighterComponent />
       <div>
-        <button onClick={approval}>claim</button>
-        <button onClick={Increment}>Increment</button>
       </div>
       <div>
         <h1>Admi purpose:Add address</h1>
